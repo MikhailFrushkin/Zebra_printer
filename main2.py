@@ -7,8 +7,7 @@ from PyQt5.QtGui import QPixmap, QImage, QPainter
 from PyQt5.QtPrintSupport import QPrinter, QPrinterInfo
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton,
                              QListWidget, QLabel, QComboBox, QDoubleSpinBox, QFileDialog,
-                             QWidget, QMessageBox, QGroupBox, QSpinBox, QSplitter, QProgressDialog,
-                             QScrollArea, QGridLayout, QRadioButton, QButtonGroup)
+                             QWidget, QMessageBox, QGroupBox, QSpinBox, QSplitter, QProgressDialog)
 from loguru import logger
 
 from utils.ratio_image_file import add_padding_to_aspect_ratio
@@ -18,24 +17,18 @@ class PrintApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Image Printer")
-        self.setGeometry(100, 100, 1400, 700)  # Увеличиваем ширину для новой панели
-        self.selected_template = None
-        self.template_buttons_group = QButtonGroup(self)
-        self.template_buttons_group.setExclusive(True)
+        self.setGeometry(100, 100, 1000, 700)
 
         self.initUI()
         self.update_printers_list()
-        self.load_templates()
 
     def initUI(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         self.setup_shortcuts()
-
         main_layout = QHBoxLayout(central_widget)
 
-        # Главный сплиттер с тремя панелями
-        main_splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Horizontal)
 
         # Левая панель (настройки печати)
         left_panel = QWidget()
@@ -117,7 +110,7 @@ class PrintApp(QMainWindow):
         self.darkness_layout.addWidget(self.darkness_spin)
         params_layout.addLayout(self.darkness_layout)
 
-        # Кнопка печати выбранного изображения
+        # Кнопка печати выбранного изображения (перенесена в эту группу)
         self.print_selected_btn = QPushButton("Печать")
         self.print_selected_btn.clicked.connect(lambda: self.print_images())
         params_layout.addWidget(self.print_selected_btn)
@@ -200,131 +193,33 @@ class PrintApp(QMainWindow):
 
         left_layout.addStretch()
 
-        # Центральная панель (список изображений и превью)
-        center_panel = QWidget()
-        center_layout = QVBoxLayout(center_panel)
+        # Правая панель (список изображений и превью)
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
 
         # Список изображений
         self.images_list = QListWidget()
         self.images_list.setSelectionMode(QListWidget.SingleSelection)
         self.images_list.currentItemChanged.connect(self.show_preview)
-        center_layout.addWidget(QLabel("Список изображений:"))
-        center_layout.addWidget(self.images_list)
+        right_layout.addWidget(QLabel("Список изображений:"))
+        right_layout.addWidget(self.images_list)
 
         # Превью изображения
         self.preview_label = QLabel()
         self.preview_label.setAlignment(Qt.AlignCenter)
-        self.preview_label.setMinimumSize(300, 300)
+        self.preview_label.setMinimumSize(400, 400)
         self.preview_label.setStyleSheet("background-color: #f0f0f0; border: 1px solid #ccc;")
-        center_layout.addWidget(QLabel("Превью:"))
-        center_layout.addWidget(self.preview_label)
+        right_layout.addWidget(QLabel("Превью:"))
+        right_layout.addWidget(self.preview_label)
 
-        # Правая панель (шаблоны)
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
+        splitter.addWidget(left_panel)
+        splitter.addWidget(right_panel)
+        splitter.setStretchFactor(1, 2)
 
-        # Заголовок шаблонов
-        right_layout.addWidget(QLabel("Шаблоны из папки 'templates':"))
-
-        # Область прокрутки для шаблонов
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        scroll_widget = QWidget()
-        self.templates_layout = QGridLayout(scroll_widget)
-        scroll_area.setWidget(scroll_widget)
-        right_layout.addWidget(scroll_area)
-
-        # Кнопка обновления шаблонов
-        self.refresh_templates_btn = QPushButton("Обновить шаблоны")
-        self.refresh_templates_btn.clicked.connect(self.load_templates)
-        right_layout.addWidget(self.refresh_templates_btn)
-
-        # Добавляем все панели в главный сплиттер
-        main_splitter.addWidget(left_panel)
-        main_splitter.addWidget(center_panel)
-        main_splitter.addWidget(right_panel)
-
-        # Устанавливаем пропорции
-        main_splitter.setSizes([300, 400, 300])
-        main_splitter.setStretchFactor(0, 1)
-        main_splitter.setStretchFactor(1, 2)
-        main_splitter.setStretchFactor(2, 1)
-
-        main_layout.addWidget(main_splitter)
+        main_layout.addWidget(splitter)
 
         self.printer_combo.currentTextChanged.connect(self.update_zebra_settings_visibility)
         self.aspect_combo.currentTextChanged.connect(self.on_aspect_combo_changed)
-
-    def load_templates(self):
-        """Загрузка шаблонов из папки templates"""
-        # Очищаем предыдущие шаблоны
-        for i in reversed(range(self.templates_layout.count())):
-            self.templates_layout.itemAt(i).widget().setParent(None)
-
-        self.template_buttons_group = QButtonGroup(self)
-        self.template_buttons_group.setExclusive(True)
-        self.template_buttons_group.buttonClicked.connect(self.on_template_selected)
-
-        templates_dir = "templates"
-        if not os.path.exists(templates_dir):
-            os.makedirs(templates_dir)
-            return
-
-        image_extensions = ['.png', '.jpg', '.jpeg', '.bmp', '.gif']
-        templates = []
-
-        for file in os.listdir(templates_dir):
-            if any(file.lower().endswith(ext) for ext in image_extensions):
-                templates.append(os.path.join(templates_dir, file))
-
-        if not templates:
-            no_templates_label = QLabel("Нет шаблонов в папке 'templates'")
-            self.templates_layout.addWidget(no_templates_label, 0, 0)
-            return
-
-        row, col = 0, 0
-        max_cols = 2  # Максимальное количество колонок
-
-        for template_path in templates:
-            # Создаем контейнер для шаблона
-            template_widget = QWidget()
-            template_layout = QVBoxLayout(template_widget)
-
-            # Превью шаблона
-            pixmap = QPixmap(template_path)
-            if not pixmap.isNull():
-                # Масштабируем превью
-                scaled_pixmap = pixmap.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                preview_label = QLabel()
-                preview_label.setPixmap(scaled_pixmap)
-                preview_label.setAlignment(Qt.AlignCenter)
-                template_layout.addWidget(preview_label)
-
-            # Радиокнопка для выбора
-            radio_btn = QRadioButton(os.path.basename(template_path))
-            radio_btn.template_path = template_path
-            self.template_buttons_group.addButton(radio_btn)
-            template_layout.addWidget(radio_btn)
-
-            # Добавляем в сетку
-            self.templates_layout.addWidget(template_widget, row, col)
-
-            col += 1
-            if col >= max_cols:
-                col = 0
-                row += 1
-
-    def on_template_selected(self, button):
-        """Обработка выбора шаблона"""
-        self.selected_template = button.template_path
-        logger.info(f"Выбран шаблон: {self.selected_template}")
-
-        # Добавляем выбранный шаблон в список изображений
-        if self.selected_template:
-            # Очищаем предыдущий выбор
-            self.images_list.clear()
-            self.images_list.addItem(self.selected_template)
-            self.images_list.setCurrentRow(0)
 
     def on_aspect_combo_changed(self, text):
         """Показывает/скрывает поля для пользовательского соотношения"""
@@ -596,9 +491,6 @@ class PrintApp(QMainWindow):
         QShortcut(QKeySequence("Ctrl+A"), self, self.add_images)
         # Delete - удалить выбранное
         QShortcut(QKeySequence("Delete"), self, self.remove_selected_image)
-        # Ctrl+R - обновить шаблоны
-        QShortcut(QKeySequence("Ctrl+R"), self, self.load_templates)
-
 
 if __name__ == "__main__":
     os.makedirs("templates", exist_ok=True)
