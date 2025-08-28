@@ -1,9 +1,10 @@
+import ctypes
 import os
 import sys
 
 import qdarkstyle
 from PyQt5.QtCore import Qt, QSizeF
-from PyQt5.QtGui import QPixmap, QImage, QPainter
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QIcon
 from PyQt5.QtPrintSupport import QPrinter, QPrinterInfo
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton,
                              QListWidget, QLabel, QComboBox, QDoubleSpinBox, QFileDialog,
@@ -12,6 +13,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
 from loguru import logger
 
 from utils.ratio_image_file import add_padding_to_aspect_ratio
+from utils.utils import get_resource_path
 
 
 class PrintApp(QMainWindow):
@@ -224,7 +226,7 @@ class PrintApp(QMainWindow):
         right_layout = QVBoxLayout(right_panel)
 
         # Заголовок шаблонов
-        right_layout.addWidget(QLabel("Шаблоны из папки 'templates':"))
+        right_layout.addWidget(QLabel("Шаблоны:"))
 
         # Область прокрутки для шаблонов
         scroll_area = QScrollArea()
@@ -233,11 +235,6 @@ class PrintApp(QMainWindow):
         self.templates_layout = QGridLayout(scroll_widget)
         scroll_area.setWidget(scroll_widget)
         right_layout.addWidget(scroll_area)
-
-        # Кнопка обновления шаблонов
-        self.refresh_templates_btn = QPushButton("Обновить шаблоны")
-        self.refresh_templates_btn.clicked.connect(self.load_templates)
-        right_layout.addWidget(self.refresh_templates_btn)
 
         # Добавляем все панели в главный сплиттер
         main_splitter.addWidget(left_panel)
@@ -265,7 +262,8 @@ class PrintApp(QMainWindow):
         self.template_buttons_group.setExclusive(True)
         self.template_buttons_group.buttonClicked.connect(self.on_template_selected)
 
-        templates_dir = "templates"
+        templates_dir = get_resource_path("templates")
+        print(templates_dir)
         if not os.path.exists(templates_dir):
             os.makedirs(templates_dir)
             return
@@ -601,8 +599,19 @@ class PrintApp(QMainWindow):
 
 
 if __name__ == "__main__":
-    os.makedirs("templates", exist_ok=True)
+    logger.add(
+        "log.log",
+        rotation="20 MB",
+        level="INFO",
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {file!s} | {line} | {message}",
+    )
+    if sys.platform == "win32":
+        myappid = "ZebraLemana 2.0.0"
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(get_resource_path("1.ico")))
+
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     window = PrintApp()
     window.show()
