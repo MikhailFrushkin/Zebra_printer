@@ -62,7 +62,7 @@ class PrintApp(QMainWindow):
         left_layout = QVBoxLayout(left_panel)
 
         # Группа выбора принтера
-        printer_group = QGroupBox()
+        printer_group = QGroupBox("Принтер")
         printer_layout = QVBoxLayout()
 
         self.printer_combo = QComboBox()
