@@ -444,7 +444,8 @@ class PrintApp(QMainWindow):
             return
 
         for printer in printers:
-            self.printer_combo.addItem(printer.printerName(), printer)
+            # Сохраняем только имя принтера, а не весь объект
+            self.printer_combo.addItem(printer.printerName(), printer.printerName())
 
         default_printer = QPrinterInfo.defaultPrinter()
         if default_printer:
@@ -534,12 +535,16 @@ class PrintApp(QMainWindow):
                 QMessageBox.warning(self, "Ошибка", "Не выбран принтер!")
                 return
 
-            printer_info = self.printer_combo.currentData()
+            printer_name = self.printer_combo.currentData()
+            if not printer_name:
+                QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о принтере!")
+                return
+            printer_info = QPrinterInfo.printerInfo(printer_name)
+            printer = QPrinter(printer_info)
             if not printer_info:
                 QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о принтере!")
                 return
 
-            printer = QPrinter(printer_info)
             printer.setFullPage(True)
             copies = self.copies_spin.value()
             printer.setCopyCount(copies)
@@ -605,7 +610,12 @@ class PrintApp(QMainWindow):
         dpi = int(self.dpi_spin.value())
         copies = self.copies_spin.value()
 
-        printer_name = self.printer_combo.currentText()
+        printer_name = self.printer_combo.currentData()
+        if not printer_name:
+            QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о принтере!")
+            return
+        printer_info = QPrinterInfo.printerInfo(printer_name)
+        printer = QPrinter(printer_info)
         if "zebra" in printer_name.lower():
             darkness = self.darkness_spin.value()
 
