@@ -1,6 +1,8 @@
 from PIL import Image
 import os
 
+from loguru import logger
+
 
 def parse_aspect_ratio(ratio_str):
     """Парсит строку соотношения сторон (например, '16:9')"""
@@ -55,7 +57,7 @@ def add_padding_to_aspect_ratio(image_path, aspect_ratio=None, output_size=None,
             new_height = int(original_height * scale)
             original_img = original_img.resize((new_width, new_height), Image.LANCZOS)
             original_width, original_height = new_width, new_height
-            print(f"Изображение масштабировано до: {original_width}x{original_height}")
+            logger.info(f"Изображение масштабировано до: {original_width}x{original_height}")
 
             new_width, new_height = target_width, target_height
 
@@ -68,9 +70,9 @@ def add_padding_to_aspect_ratio(image_path, aspect_ratio=None, output_size=None,
 
             # Если текущее соотношение уже соответствует целевому
             if abs(original_ratio - target_ratio) < 0.01:
-                print("Изображение уже имеет нужное соотношение сторон")
-                if output_path:
-                    original_img.save(output_path)
+                logger.warning("Изображение уже имеет нужное соотношение сторон")
+                # if output_path:
+                #     original_img.save(output_path)
                 return original_img
 
             # Определяем новые размеры на основе соотношения сторон
@@ -104,7 +106,7 @@ def add_padding_to_aspect_ratio(image_path, aspect_ratio=None, output_size=None,
             padding_top = (new_height - original_height) // 2
             padding_bottom = new_height - original_height - padding_top
 
-            print(f"Дополнительное масштабирование до: {original_width}x{original_height}")
+            logger.info(f"Дополнительное масштабирование до: {original_width}x{original_height}")
 
         # Создаем новое изображение с белым фоном
         new_img = Image.new('RGB', (new_width, new_height), (255, 255, 255))
@@ -118,12 +120,12 @@ def add_padding_to_aspect_ratio(image_path, aspect_ratio=None, output_size=None,
             suffix = "_padded" if aspect_ratio else "_resized"
             output_path = f"{name}{suffix}{ext}"
 
-        new_img.save(output_path)
-        print(f"Изображение сохранено как: {output_path}")
-        print(f"Исходные размеры: {img.size[0]}x{img.size[1]}")
-        print(f"Масштабированные размеры: {original_width}x{original_height}")
-        print(f"Финальные размеры: {new_width}x{new_height}")
-        print(
+        # new_img.save(output_path)
+        # print(f"Изображение сохранено как: {output_path}")
+        logger.info(f"Исходные размеры: {img.size[0]}x{img.size[1]}")
+        logger.info(f"Масштабированные размеры: {original_width}x{original_height}")
+        logger.info(f"Финальные размеры: {new_width}x{new_height}")
+        logger.info(
             f"Добавлено полей: слева {padding_left}, справа {padding_right}, сверху {padding_top}, снизу {padding_bottom}")
 
         return new_img

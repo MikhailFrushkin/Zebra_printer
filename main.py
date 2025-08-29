@@ -2,9 +2,8 @@ import ctypes
 import os
 import sys
 
-import qdarkstyle
 from PyQt5.QtCore import Qt, QSizeF
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QIcon
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QIcon, QMouseEvent
 from PyQt5.QtPrintSupport import QPrinter, QPrinterInfo
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton,
                              QListWidget, QLabel, QComboBox, QDoubleSpinBox, QFileDialog,
@@ -12,20 +11,39 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QHBoxLayout
                              QScrollArea, QGridLayout, QRadioButton, QButtonGroup)
 from loguru import logger
 
+from styles import apply_styles, setup_button_styles
 from utils.ratio_image_file import add_padding_to_aspect_ratio
 from utils.utils import get_resource_path
+
+
+class ClickableLabel(QLabel):
+    """QLabel с поддержкой кликов"""
+
+    def __init__(self, template_path=None, main_window=None, parent=None):
+        super().__init__(parent)
+        self.template_path = template_path
+        self.main_window = main_window
+        self.setCursor(Qt.PointingHandCursor)
+
+    def mousePressEvent(self, event: QMouseEvent):
+        """Обработка клика мыши"""
+        if event.button() == Qt.LeftButton and self.template_path and self.main_window:
+            # Вызываем метод главного окна напрямую
+            self.main_window.on_template_image_clicked(self.template_path)
+        super().mousePressEvent(event)
 
 
 class PrintApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Image Printer")
-        self.setGeometry(100, 100, 1400, 700)  # Увеличиваем ширину для новой панели
+        self.setGeometry(100, 100,1800, 700)  # Увеличиваем ширину для новой панели
+        self.setWindowOpacity(0.95)
         self.selected_template = None
         self.template_buttons_group = QButtonGroup(self)
         self.template_buttons_group.setExclusive(True)
-
         self.initUI()
+        self.background_image = QPixmap(get_resource_path("фон.jpg"))
         self.update_printers_list()
         self.load_templates()
 
@@ -44,20 +62,17 @@ class PrintApp(QMainWindow):
         left_layout = QVBoxLayout(left_panel)
 
         # Группа выбора принтера
-        printer_group = QGroupBox("Принтер")
+        printer_group = QGroupBox()
         printer_layout = QVBoxLayout()
 
         self.printer_combo = QComboBox()
-        self.refresh_printers_btn = QPushButton("Обновить список")
-        self.refresh_printers_btn.clicked.connect(self.update_printers_list)
 
         printer_layout.addWidget(self.printer_combo)
-        printer_layout.addWidget(self.refresh_printers_btn)
         printer_group.setLayout(printer_layout)
         left_layout.addWidget(printer_group)
 
         # Количество копий (вынесено отдельно вверх)
-        copies_group = QGroupBox("Количество копий")
+        copies_group = QGroupBox()
         copies_layout = QHBoxLayout()
         copies_layout.addWidget(QLabel("Копий:"))
         self.copies_spin = QSpinBox()
@@ -128,14 +143,14 @@ class PrintApp(QMainWindow):
         left_layout.addWidget(params_group)
 
         # Блок 1: Печать по соотношению сторон
-        aspect_group = QGroupBox("Печать по соотношению сторон")
+        aspect_group = QGroupBox()
         aspect_layout = QVBoxLayout()
 
         # Выбор соотношения сторон
         aspect_ratio_layout = QHBoxLayout()
         aspect_ratio_layout.addWidget(QLabel("Соотношение:"))
         self.aspect_combo = QComboBox()
-        self.aspect_combo.addItems(["16:9", "4:3", "1:1", "9:16", "3:4", "21:9", "custom"])
+        self.aspect_combo.addItems(["16:9", "4:3", "1:1", "9:16", "3:4", "21:9", "Указать"])
         aspect_ratio_layout.addWidget(self.aspect_combo)
         aspect_layout.addLayout(aspect_ratio_layout)
 
@@ -165,7 +180,7 @@ class PrintApp(QMainWindow):
         left_layout.addWidget(aspect_group)
 
         # Блок 2: Печать по конкретным размерам
-        size_group = QGroupBox("Печать по размерам")
+        size_group = QGroupBox()
         size_layout = QVBoxLayout()
 
         # Поля для ввода размеров
@@ -218,6 +233,8 @@ class PrintApp(QMainWindow):
         self.preview_label.setAlignment(Qt.AlignCenter)
         self.preview_label.setMinimumSize(300, 300)
         self.preview_label.setStyleSheet("background-color: #f0f0f0; border: 1px solid #ccc;")
+        self.preview_label.setObjectName("previewLabel")
+
         center_layout.addWidget(QLabel("Превью:"))
         center_layout.addWidget(self.preview_label)
 
@@ -237,6 +254,10 @@ class PrintApp(QMainWindow):
         right_layout.addWidget(scroll_area)
 
         # Добавляем все панели в главный сплиттер
+        left_panel.setObjectName("leftPanel")
+        center_panel.setObjectName("centerPanel")
+        right_panel.setObjectName("rightPanel")
+
         main_splitter.addWidget(left_panel)
         main_splitter.addWidget(center_panel)
         main_splitter.addWidget(right_panel)
@@ -252,15 +273,22 @@ class PrintApp(QMainWindow):
         self.printer_combo.currentTextChanged.connect(self.update_zebra_settings_visibility)
         self.aspect_combo.currentTextChanged.connect(self.on_aspect_combo_changed)
 
+        # Подключаем обработчик выбора шаблонов
+        self.template_buttons_group.buttonClicked.connect(self.on_template_selected)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        # Растягиваем изображение на весь фон
+        painter.drawPixmap(self.rect(), self.background_image)
+        super().paintEvent(event)
+
     def load_templates(self):
         """Загрузка шаблонов из папки templates"""
         # Очищаем предыдущие шаблоны
         for i in reversed(range(self.templates_layout.count())):
-            self.templates_layout.itemAt(i).widget().setParent(None)
-
-        self.template_buttons_group = QButtonGroup(self)
-        self.template_buttons_group.setExclusive(True)
-        self.template_buttons_group.buttonClicked.connect(self.on_template_selected)
+            widget = self.templates_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
 
         templates_dir = get_resource_path("templates")
         print(templates_dir)
@@ -286,21 +314,50 @@ class PrintApp(QMainWindow):
         for template_path in templates:
             # Создаем контейнер для шаблона
             template_widget = QWidget()
+            template_widget.setObjectName("templateWidget")
             template_layout = QVBoxLayout(template_widget)
+            template_layout.setSpacing(5)
+            template_layout.setContentsMargins(5, 5, 5, 5)
 
-            # Превью шаблона
+            # Превью шаблона (кликабельное)
             pixmap = QPixmap(template_path)
             if not pixmap.isNull():
                 # Масштабируем превью
                 scaled_pixmap = pixmap.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                preview_label = QLabel()
+                preview_label = ClickableLabel(template_path, self, template_widget)  # Передаем self как main_window
                 preview_label.setPixmap(scaled_pixmap)
                 preview_label.setAlignment(Qt.AlignCenter)
+                preview_label.setObjectName("templatePreview")
+                preview_label.template_path = template_path
+
+                # Добавляем эффект при наведении
+                preview_label.setStyleSheet("""
+                    QLabel#templatePreview {
+                        border: 2px solid transparent;
+                        border-radius: 5px;
+                        padding: 5px;
+                    }
+                    QLabel#templatePreview:hover {
+                        border: 2px solid #0078d7;
+                        background-color: #f0f8ff;
+                    }
+                """)
+
                 template_layout.addWidget(preview_label)
 
             # Радиокнопка для выбора
             radio_btn = QRadioButton(os.path.basename(template_path))
             radio_btn.template_path = template_path
+            radio_btn.setStyleSheet("""
+                QRadioButton {
+                    spacing: 5px;
+                    padding: 2px;
+                }
+                QRadioButton::indicator {
+                    width: 16px;
+                    height: 16px;
+                }
+            """)
             self.template_buttons_group.addButton(radio_btn)
             template_layout.addWidget(radio_btn)
 
@@ -312,6 +369,17 @@ class PrintApp(QMainWindow):
                 col = 0
                 row += 1
 
+
+    def on_template_image_clicked(self, template_path):
+        """Обработка клика на изображение шаблона"""
+        logger.info(f"Клик на шаблон: {template_path}")
+
+        # Устанавливаем соответствующую радиокнопку
+        for button in self.template_buttons_group.buttons():
+            if hasattr(button, 'template_path') and button.template_path == template_path:
+                button.setChecked(True)
+                self.on_template_selected(button)
+                break
     def on_template_selected(self, button):
         """Обработка выбора шаблона"""
         self.selected_template = button.template_path
@@ -324,9 +392,12 @@ class PrintApp(QMainWindow):
             self.images_list.addItem(self.selected_template)
             self.images_list.setCurrentRow(0)
 
+            # Показываем превью
+            self.show_preview(self.images_list.currentItem(), None)
+
     def on_aspect_combo_changed(self, text):
         """Показывает/скрывает поля для пользовательского соотношения"""
-        if text == "custom":
+        if text == "Указать":
             self.custom_aspect_frame.show()
         else:
             self.custom_aspect_frame.hide()
@@ -400,7 +471,7 @@ class PrintApp(QMainWindow):
     def get_aspect_ratio(self):
         """Получает выбранное соотношение сторон"""
         aspect_text = self.aspect_combo.currentText()
-        if aspect_text == "custom":
+        if aspect_text == "Указать":
             width = self.custom_aspect_width.value()
             height = self.custom_aspect_height.value()
             return f"{width}:{height}"
@@ -612,7 +683,13 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(get_resource_path("1.ico")))
 
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    # Применяем стили
+
     window = PrintApp()
     window.show()
+
+    # Настраиваем стили кнопок после создания окна
+    setup_button_styles(window)
+    apply_styles(app)
+
     sys.exit(app.exec_())
