@@ -28,6 +28,18 @@ def apply_styles(app):
         max-height: 30px;
     }
 
+    /* Скрыть разделитель сплиттера(разделителя колонок) */
+    QSplitter::handle {
+        background: transparent;
+        width: 0px;
+        height: 0px;
+        border: none;
+    }
+    
+    QSplitter::handle:hover {
+        background: transparent;
+    }
+
     QPushButton:hover {
         background-color: rgba(58, 119, 195, 0.9);  /* Темнее при наведении */
         border: 2px solid #3a77c3;
@@ -58,7 +70,7 @@ def apply_styles(app):
     /* Стиль для радиокнопок шаблонов */
     QRadioButton {
         padding: 8px;
-        font-size: 12px;
+        font-size: 14px;
         spacing: 5px;
     }
 

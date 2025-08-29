@@ -172,7 +172,7 @@ class PrintApp(QMainWindow):
         self.custom_aspect_frame.hide()
 
         # Кнопка печати по соотношению сторон
-        self.print_aspect_btn = QPushButton("Печать по соотношению")
+        self.print_aspect_btn = QPushButton("Печать по соотношению сторон")
         self.print_aspect_btn.clicked.connect(self.print_by_aspect_ratio)
         aspect_layout.addWidget(self.print_aspect_btn)
 
@@ -225,7 +225,6 @@ class PrintApp(QMainWindow):
         self.images_list = QListWidget()
         self.images_list.setSelectionMode(QListWidget.SingleSelection)
         self.images_list.currentItemChanged.connect(self.show_preview)
-        center_layout.addWidget(QLabel("Список изображений:"))
         center_layout.addWidget(self.images_list)
 
         # Превью изображения
@@ -235,15 +234,11 @@ class PrintApp(QMainWindow):
         self.preview_label.setStyleSheet("background-color: #f0f0f0; border: 1px solid #ccc;")
         self.preview_label.setObjectName("previewLabel")
 
-        center_layout.addWidget(QLabel("Превью:"))
         center_layout.addWidget(self.preview_label)
 
         # Правая панель (шаблоны)
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
-
-        # Заголовок шаблонов
-        right_layout.addWidget(QLabel("Шаблоны:"))
 
         # Область прокрутки для шаблонов
         scroll_area = QScrollArea()
