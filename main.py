@@ -62,7 +62,7 @@ class PrintApp(QMainWindow):
         left_layout = QVBoxLayout(left_panel)
 
         # Группа выбора принтера
-        printer_group = QGroupBox("Принтер")
+        printer_group = QGroupBox()
         printer_layout = QVBoxLayout()
 
         self.printer_combo = QComboBox()
@@ -406,7 +406,12 @@ class PrintApp(QMainWindow):
         """Показывает/скрывает настройки плотности для Zebra"""
         printer_name = self.printer_combo.currentText()
         is_zebra = "zebra" in printer_name.lower()
-        self.darkness_layout.parent().setVisible(is_zebra)
+        # Получаем родительский layout и показываем/скрываем его
+        if hasattr(self, 'darkness_layout'):
+            for i in range(self.darkness_layout.count()):
+                widget = self.darkness_layout.itemAt(i).widget()
+                if widget:
+                    widget.setVisible(is_zebra)
 
     def show_preview(self, current_item, previous_item):
         """Показывает превью выбранного изображения"""
@@ -436,24 +441,42 @@ class PrintApp(QMainWindow):
             self.show_preview(self.images_list.currentItem(), None)
 
     def update_printers_list(self):
-        self.printer_combo.clear()
-        printers = QPrinterInfo.availablePrinters()
+        """Обновление списка доступных принтеров"""
+        try:
+            self.printer_combo.clear()
 
-        if not printers:
-            QMessageBox.warning(self, "Ошибка", "Не найдено ни одного принтера!")
-            return
+            # Получаем список принтеров
+            printers = QPrinterInfo.availablePrinters()
+            logger.debug(f"Найдено принтеров: {len(printers)}")
 
-        for printer in printers:
-            # Сохраняем только имя принтера, а не весь объект
-            self.printer_combo.addItem(printer.printerName(), printer.printerName())
+            if not printers:
+                QMessageBox.warning(self, "Ошибка", "Не найдено ни одного принтера!")
+                # Добавляем заглушку
+                self.printer_combo.addItem("Принтеры не найдены", "")
+                return
 
-        default_printer = QPrinterInfo.defaultPrinter()
-        if default_printer:
-            index = self.printer_combo.findText(default_printer.printerName())
-            if index >= 0:
-                self.printer_combo.setCurrentIndex(index)
+            # Добавляем принтеры в комбобокс
+            for printer in printers:
+                printer_name = printer.printerName()
+                logger.debug(f"Добавляем принтер: {printer_name}")
 
-        self.update_zebra_settings_visibility()
+                # Просто добавляем имя принтера, без userData
+                self.printer_combo.addItem(printer_name)
+
+            # Устанавливаем принтер по умолчанию
+            default_printer = QPrinterInfo.defaultPrinter()
+            if default_printer and not default_printer.isNull():
+                default_name = default_printer.printerName()
+                index = self.printer_combo.findText(default_name)
+                if index >= 0:
+                    self.printer_combo.setCurrentIndex(index)
+                    logger.debug(f"Установлен принтер по умолчанию: {default_name}")
+
+            self.update_zebra_settings_visibility()
+
+        except Exception as e:
+            logger.error(f"Ошибка при обновлении списка принтеров: {e}")
+            QMessageBox.critical(self, "Ошибка", f"Не удалось загрузить список принтеров: {str(e)}")
 
     def add_images(self):
         file_dialog = QFileDialog()
@@ -535,16 +558,14 @@ class PrintApp(QMainWindow):
                 QMessageBox.warning(self, "Ошибка", "Не выбран принтер!")
                 return
 
-            printer_name = self.printer_combo.currentData()
-            if not printer_name:
-                QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о принтере!")
-                return
+            printer_name = self.printer_combo.currentText()
             printer_info = QPrinterInfo.printerInfo(printer_name)
-            printer = QPrinter(printer_info)
-            if not printer_info:
-                QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о принтере!")
+
+            if printer_info.isNull():
+                QMessageBox.warning(self, "Ошибка", f"Принтер '{printer_name}' не найден!")
                 return
 
+            printer = QPrinter(printer_info)
             printer.setFullPage(True)
             copies = self.copies_spin.value()
             printer.setCopyCount(copies)
@@ -595,74 +616,84 @@ class PrintApp(QMainWindow):
             QMessageBox.warning(self, "Ошибка", "Не выбран принтер!")
             return
 
-        printer_info = self.printer_combo.currentData()
-        if not printer_info:
-            QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о принтере!")
-            return
-
-        printer = QPrinter(printer_info)
-        printer.setFullPage(True)
-
-        width_mm = self.width_spin.value()
-        height_mm = self.height_spin.value()
-        margin_left_mm = self.margin_left_spin.value()
-        margin_top_mm = self.margin_top_spin.value()
-        dpi = int(self.dpi_spin.value())
-        copies = self.copies_spin.value()
-
-        printer_name = self.printer_combo.currentData()
-        if not printer_name:
-            QMessageBox.warning(self, "Ошибка", "Не удалось получить информацию о принтере!")
-            return
-        printer_info = QPrinterInfo.printerInfo(printer_name)
-        printer = QPrinter(printer_info)
-        if "zebra" in printer_name.lower():
-            darkness = self.darkness_spin.value()
-
-        printer.setPaperSize(QSizeF(width_mm, height_mm), QPrinter.Millimeter)
-        printer.setResolution(dpi)
-        printer.setCopyCount(copies)
-
-        painter = None
         try:
-            items_to_print = self.images_list.selectedItems()
+            # Получаем имя выбранного принтера
+            printer_name = self.printer_combo.currentText()
+            logger.debug(f"Выбран принтер: {printer_name}")
 
-            for item in items_to_print:
-                image_path = item.text()
-                image = QImage(image_path)
+            # Создаем QPrinterInfo по имени
+            printer_info = QPrinterInfo.printerInfo(printer_name)
+            if printer_info.isNull():
+                QMessageBox.warning(self, "Ошибка", f"Принтер '{printer_name}' не найден!")
+                return
 
-                if image.isNull():
-                    QMessageBox.warning(self, "Ошибка", f"Не удалось загрузить изображение: {image_path}")
-                    continue
+            printer = QPrinter(printer_info)
+            printer.setFullPage(True)
 
-                scaled_image = image.scaled(
-                    int(width_mm * dpi / 25.4),
-                    int(height_mm * dpi / 25.4),
-                    Qt.KeepAspectRatio,
-                    Qt.SmoothTransformation
-                )
+            width_mm = self.width_spin.value()
+            height_mm = self.height_spin.value()
+            margin_left_mm = self.margin_left_spin.value()
+            margin_top_mm = self.margin_top_spin.value()
+            dpi = int(self.dpi_spin.value())
+            copies = self.copies_spin.value()
 
-                if not painter:
-                    painter = QPainter()
-                    if not painter.begin(printer):
-                        QMessageBox.warning(self, "Ошибка", "Не удалось начать печать!")
-                        return
+            printer_name_lower = printer_name.lower()
+            if "zebra" in printer_name_lower:
+                darkness = self.darkness_spin.value()
+                # Здесь можно добавить настройки для Zebra
 
-                x_offset = int(margin_left_mm * dpi / 25.4)
-                y_offset = int(margin_top_mm * dpi / 25.4)
-                painter.drawImage(x_offset, y_offset, scaled_image)
+            printer.setPaperSize(QSizeF(width_mm, height_mm), QPrinter.Millimeter)
+            printer.setResolution(dpi)
+            printer.setCopyCount(copies)
 
-                if item != items_to_print[-1]:
-                    printer.newPage()
+            painter = None
+            try:
+                items_to_print = self.images_list.selectedItems()
+                if not items_to_print:
+                    items_to_print = [self.images_list.item(i) for i in range(self.images_list.count())]
 
-            if painter:
-                painter.end()
+                for item in items_to_print:
+                    image_path = item.text()
+                    image = QImage(image_path)
 
-            QMessageBox.information(self, "Успех", "Печать завершена!")
+                    if image.isNull():
+                        QMessageBox.warning(self, "Ошибка", f"Не удалось загрузить изображение: {image_path}")
+                        continue
+
+                    scaled_image = image.scaled(
+                        int(width_mm * dpi / 25.4),
+                        int(height_mm * dpi / 25.4),
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation
+                    )
+
+                    if not painter:
+                        painter = QPainter()
+                        if not painter.begin(printer):
+                            QMessageBox.warning(self, "Ошибка", "Не удалось начать печать!")
+                            return
+
+                    x_offset = int(margin_left_mm * dpi / 25.4)
+                    y_offset = int(margin_top_mm * dpi / 25.4)
+                    painter.drawImage(x_offset, y_offset, scaled_image)
+
+                    if item != items_to_print[-1]:
+                        printer.newPage()
+
+                if painter:
+                    painter.end()
+
+                QMessageBox.information(self, "Успех", "Печать завершена!")
+
+            except Exception as e:
+                if painter:
+                    painter.end()
+                logger.error(f"Ошибка при печати: {e}")
+                QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при печати: {str(e)}")
+
         except Exception as e:
-            if painter:
-                painter.end()
-            QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при печати: {str(e)}")
+            logger.error(f"Ошибка при подготовке к печати: {e}")
+            QMessageBox.critical(self, "Ошибка", f"Ошибка при подготовке к печати: {str(e)}")
 
     def setup_shortcuts(self):
         """Настройка горячих клавиш"""
