@@ -1,4 +1,3 @@
-# styles.py
 from PyQt5.QtGui import QFont
 
 
@@ -183,13 +182,13 @@ def setup_button_styles(window):
 
     # Присваиваем объектные имена для точечного стилирования
     window.print_selected_btn.setObjectName("printButton")
-    window.print_aspect_btn.setObjectName("printButton")
-    window.print_size_btn.setObjectName("printButton")
+    # window.print_aspect_btn.setObjectName("printButton")
+    # window.print_size_btn.setObjectName("printButton")
 
     # Увеличиваем размеры конкретных кнопок
-    for btn in [window.print_selected_btn, window.print_aspect_btn, window.print_size_btn]:
-        btn.setMinimumHeight(40)
-        btn.setMinimumWidth(100)
+    # for btn in [window.print_selected_btn, window.print_aspect_btn, window.print_size_btn]:
+    #     btn.setMinimumHeight(40)
+    #     btn.setMinimumWidth(100)
 
     # Настраиваем стиль для кнопок добавления/удаления изображений
     for btn in [window.add_images_btn, window.remove_image_btn]:

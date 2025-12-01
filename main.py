@@ -37,8 +37,8 @@ class PrintApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Image Printer")
-        self.setGeometry(100, 100,1800, 700)  # Увеличиваем ширину для новой панели
-        self.setWindowOpacity(0.95)
+        self.setGeometry(100, 100, 1800, 700)  # Увеличиваем ширину для новой панели
+        self.setWindowOpacity(0.99)
         self.selected_template = None
         self.template_buttons_group = QButtonGroup(self)
         self.template_buttons_group.setExclusive(True)
@@ -91,13 +91,13 @@ class PrintApp(QMainWindow):
         size_layout.addWidget(QLabel("Ширина (мм):"))
         self.width_spin = QDoubleSpinBox()
         self.width_spin.setRange(1, 1000)
-        self.width_spin.setValue(105)
+        self.width_spin.setValue(100)
         size_layout.addWidget(self.width_spin)
 
         size_layout.addWidget(QLabel("Высота (мм):"))
         self.height_spin = QDoubleSpinBox()
         self.height_spin.setRange(1, 1000)
-        self.height_spin.setValue(55)
+        self.height_spin.setValue(75)
         size_layout.addWidget(self.height_spin)
         params_layout.addLayout(size_layout)
 
@@ -106,13 +106,13 @@ class PrintApp(QMainWindow):
         margin_layout.addWidget(QLabel("Отступ слева (мм):"))
         self.margin_left_spin = QDoubleSpinBox()
         self.margin_left_spin.setRange(0, 100)
-        self.margin_left_spin.setValue(0)
+        self.margin_left_spin.setValue(1)
         margin_layout.addWidget(self.margin_left_spin)
 
         margin_layout.addWidget(QLabel("Отступ сверху (мм):"))
         self.margin_top_spin = QDoubleSpinBox()
         self.margin_top_spin.setRange(0, 100)
-        self.margin_top_spin.setValue(0)
+        self.margin_top_spin.setValue(1)
         margin_layout.addWidget(self.margin_top_spin)
         params_layout.addLayout(margin_layout)
 
@@ -130,7 +130,7 @@ class PrintApp(QMainWindow):
         self.darkness_layout.addWidget(QLabel("Плотность печати (Zebra):"))
         self.darkness_spin = QSpinBox()
         self.darkness_spin.setRange(0, 30)
-        self.darkness_spin.setValue(15)
+        self.darkness_spin.setValue(30)
         self.darkness_layout.addWidget(self.darkness_spin)
         params_layout.addLayout(self.darkness_layout)
 
@@ -142,69 +142,69 @@ class PrintApp(QMainWindow):
         params_group.setLayout(params_layout)
         left_layout.addWidget(params_group)
 
-        # Блок 1: Печать по соотношению сторон
-        aspect_group = QGroupBox()
-        aspect_layout = QVBoxLayout()
-
-        # Выбор соотношения сторон
-        aspect_ratio_layout = QHBoxLayout()
-        aspect_ratio_layout.addWidget(QLabel("Соотношение:"))
-        self.aspect_combo = QComboBox()
-        self.aspect_combo.addItems(["16:9", "4:3", "1:1", "9:16", "3:4", "21:9", "Указать"])
-        aspect_ratio_layout.addWidget(self.aspect_combo)
-        aspect_layout.addLayout(aspect_ratio_layout)
-
-        # Поля для пользовательского соотношения
-        self.custom_aspect_frame = QWidget()
-        custom_aspect_layout = QHBoxLayout(self.custom_aspect_frame)
-        custom_aspect_layout.addWidget(QLabel("Ширина:"))
-        self.custom_aspect_width = QSpinBox()
-        self.custom_aspect_width.setRange(1, 100)
-        self.custom_aspect_width.setValue(16)
-        custom_aspect_layout.addWidget(self.custom_aspect_width)
-
-        custom_aspect_layout.addWidget(QLabel("Высота:"))
-        self.custom_aspect_height = QSpinBox()
-        self.custom_aspect_height.setRange(1, 100)
-        self.custom_aspect_height.setValue(9)
-        custom_aspect_layout.addWidget(self.custom_aspect_height)
-        aspect_layout.addWidget(self.custom_aspect_frame)
-        self.custom_aspect_frame.hide()
-
-        # Кнопка печати по соотношению сторон
-        self.print_aspect_btn = QPushButton("Печать по соотношению сторон")
-        self.print_aspect_btn.clicked.connect(self.print_by_aspect_ratio)
-        aspect_layout.addWidget(self.print_aspect_btn)
-
-        aspect_group.setLayout(aspect_layout)
-        left_layout.addWidget(aspect_group)
-
-        # Блок 2: Печать по конкретным размерам
-        size_group = QGroupBox()
-        size_layout = QVBoxLayout()
-
-        # Поля для ввода размеров
-        size_input_layout = QHBoxLayout()
-        size_input_layout.addWidget(QLabel("Ширина:"))
-        self.size_width = QSpinBox()
-        self.size_width.setRange(1, 10000)
-        self.size_width.setValue(800)
-        size_input_layout.addWidget(self.size_width)
-
-        size_input_layout.addWidget(QLabel("Высота:"))
-        self.size_height = QSpinBox()
-        self.size_height.setRange(1, 10000)
-        self.size_height.setValue(600)
-        size_input_layout.addWidget(self.size_height)
-        size_layout.addLayout(size_input_layout)
-
-        # Кнопка печати по размерам
-        self.print_size_btn = QPushButton("Печать по размерам")
-        self.print_size_btn.clicked.connect(self.print_by_size)
-        size_layout.addWidget(self.print_size_btn)
-
-        size_group.setLayout(size_layout)
-        left_layout.addWidget(size_group)
+        # # Блок 1: Печать по соотношению сторон
+        # aspect_group = QGroupBox()
+        # aspect_layout = QVBoxLayout()
+        #
+        # # Выбор соотношения сторон
+        # aspect_ratio_layout = QHBoxLayout()
+        # aspect_ratio_layout.addWidget(QLabel("Соотношение:"))
+        # self.aspect_combo = QComboBox()
+        # self.aspect_combo.addItems(["16:9", "4:3", "1:1", "9:16", "3:4", "21:9", "Указать"])
+        # aspect_ratio_layout.addWidget(self.aspect_combo)
+        # aspect_layout.addLayout(aspect_ratio_layout)
+        #
+        # # Поля для пользовательского соотношения
+        # self.custom_aspect_frame = QWidget()
+        # custom_aspect_layout = QHBoxLayout(self.custom_aspect_frame)
+        # custom_aspect_layout.addWidget(QLabel("Ширина:"))
+        # self.custom_aspect_width = QSpinBox()
+        # self.custom_aspect_width.setRange(1, 100)
+        # self.custom_aspect_width.setValue(16)
+        # custom_aspect_layout.addWidget(self.custom_aspect_width)
+        #
+        # custom_aspect_layout.addWidget(QLabel("Высота:"))
+        # self.custom_aspect_height = QSpinBox()
+        # self.custom_aspect_height.setRange(1, 100)
+        # self.custom_aspect_height.setValue(9)
+        # custom_aspect_layout.addWidget(self.custom_aspect_height)
+        # aspect_layout.addWidget(self.custom_aspect_frame)
+        # self.custom_aspect_frame.hide()
+        #
+        # # Кнопка печати по соотношению сторон
+        # self.print_aspect_btn = QPushButton("Печать по соотношению сторон")
+        # self.print_aspect_btn.clicked.connect(self.print_by_aspect_ratio)
+        # aspect_layout.addWidget(self.print_aspect_btn)
+        #
+        # aspect_group.setLayout(aspect_layout)
+        # left_layout.addWidget(aspect_group)
+        #
+        # # Блок 2: Печать по конкретным размерам
+        # size_group = QGroupBox()
+        # size_layout = QVBoxLayout()
+        #
+        # # Поля для ввода размеров
+        # size_input_layout = QHBoxLayout()
+        # size_input_layout.addWidget(QLabel("Ширина:"))
+        # self.size_width = QSpinBox()
+        # self.size_width.setRange(1, 10000)
+        # self.size_width.setValue(800)
+        # size_input_layout.addWidget(self.size_width)
+        #
+        # size_input_layout.addWidget(QLabel("Высота:"))
+        # self.size_height = QSpinBox()
+        # self.size_height.setRange(1, 10000)
+        # self.size_height.setValue(600)
+        # size_input_layout.addWidget(self.size_height)
+        # size_layout.addLayout(size_input_layout)
+        #
+        # # Кнопка печати по размерам
+        # self.print_size_btn = QPushButton("Печать по размерам")
+        # self.print_size_btn.clicked.connect(self.print_by_size)
+        # size_layout.addWidget(self.print_size_btn)
+        #
+        # size_group.setLayout(size_layout)
+        # left_layout.addWidget(size_group)
 
         # Кнопки управления изображениями
         self.add_images_btn = QPushButton("Добавить изображения")
@@ -266,7 +266,7 @@ class PrintApp(QMainWindow):
         main_layout.addWidget(main_splitter)
 
         self.printer_combo.currentTextChanged.connect(self.update_zebra_settings_visibility)
-        self.aspect_combo.currentTextChanged.connect(self.on_aspect_combo_changed)
+        # self.aspect_combo.currentTextChanged.connect(self.on_aspect_combo_changed)
 
         # Подключаем обработчик выбора шаблонов
         self.template_buttons_group.buttonClicked.connect(self.on_template_selected)
@@ -364,7 +364,6 @@ class PrintApp(QMainWindow):
                 col = 0
                 row += 1
 
-
     def on_template_image_clicked(self, template_path):
         """Обработка клика на изображение шаблона"""
         logger.info(f"Клик на шаблон: {template_path}")
@@ -375,6 +374,7 @@ class PrintApp(QMainWindow):
                 button.setChecked(True)
                 self.on_template_selected(button)
                 break
+
     def on_template_selected(self, button):
         """Обработка выбора шаблона"""
         self.selected_template = button.template_path
@@ -602,6 +602,94 @@ class PrintApp(QMainWindow):
             logger.error(f"Ошибка при печати: {e}")
             QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при печати: {str(e)}")
 
+    # def print_images(self):
+    #     if self.images_list.count() == 0:
+    #         QMessageBox.warning(self, "Ошибка", "Нет изображений для печати!")
+    #         return
+    #
+    #     if self.printer_combo.count() == 0:
+    #         QMessageBox.warning(self, "Ошибка", "Не выбран принтер!")
+    #         return
+    #
+    #     try:
+    #         # Получаем имя выбранного принтера
+    #         printer_name = self.printer_combo.currentText()
+    #         logger.debug(f"Выбран принтер: {printer_name}")
+    #
+    #         # Создаем QPrinterInfo по имени
+    #         printer_info = QPrinterInfo.printerInfo(printer_name)
+    #         if printer_info.isNull():
+    #             QMessageBox.warning(self, "Ошибка", f"Принтер '{printer_name}' не найден!")
+    #             return
+    #
+    #         printer = QPrinter(printer_info)
+    #         printer.setFullPage(True)
+    #
+    #         width_mm = self.width_spin.value()
+    #         height_mm = self.height_spin.value()
+    #         margin_left_mm = self.margin_left_spin.value()
+    #         margin_top_mm = self.margin_top_spin.value()
+    #         dpi = int(self.dpi_spin.value())
+    #         copies = self.copies_spin.value()
+    #
+    #         printer_name_lower = printer_name.lower()
+    #         if "zebra" in printer_name_lower:
+    #             darkness = self.darkness_spin.value()
+    #             # Здесь можно добавить настройки для Zebra
+    #
+    #         printer.setPaperSize(QSizeF(width_mm, height_mm), QPrinter.Millimeter)
+    #         printer.setResolution(dpi)
+    #         printer.setCopyCount(copies)
+    #
+    #         painter = None
+    #         try:
+    #             items_to_print = self.images_list.selectedItems()
+    #             if not items_to_print:
+    #                 items_to_print = [self.images_list.item(i) for i in range(self.images_list.count())]
+    #
+    #             for item in items_to_print:
+    #                 image_path = item.text()
+    #                 image = QImage(image_path)
+    #
+    #                 if image.isNull():
+    #                     QMessageBox.warning(self, "Ошибка", f"Не удалось загрузить изображение: {image_path}")
+    #                     continue
+    #
+    #                 scaled_image = image.scaled(
+    #                     int(width_mm * dpi / 25.4),
+    #                     int(height_mm * dpi / 25.4),
+    #                     Qt.KeepAspectRatio,
+    #                     Qt.SmoothTransformation
+    #                 )
+    #
+    #                 if not painter:
+    #                     painter = QPainter()
+    #                     if not painter.begin(printer):
+    #                         QMessageBox.warning(self, "Ошибка", "Не удалось начать печать!")
+    #                         return
+    #
+    #                 x_offset = int(margin_left_mm * dpi / 25.4)
+    #                 y_offset = int(margin_top_mm * dpi / 25.4)
+    #                 painter.drawImage(x_offset, y_offset, scaled_image)
+    #
+    #                 if item != items_to_print[-1]:
+    #                     printer.newPage()
+    #
+    #             if painter:
+    #                 painter.end()
+    #
+    #             QMessageBox.information(self, "Успех", "Печать завершена!")
+    #
+    #         except Exception as e:
+    #             if painter:
+    #                 painter.end()
+    #             logger.error(f"Ошибка при печати: {e}")
+    #             QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при печати: {str(e)}")
+    #
+    #     except Exception as e:
+    #         logger.error(f"Ошибка при подготовке к печати: {e}")
+    #         QMessageBox.critical(self, "Ошибка", f"Ошибка при подготовке к печати: {str(e)}")
+
     def print_images(self):
         if self.images_list.count() == 0:
             QMessageBox.warning(self, "Ошибка", "Нет изображений для печати!")
@@ -655,10 +743,15 @@ class PrintApp(QMainWindow):
                         QMessageBox.warning(self, "Ошибка", f"Не удалось загрузить изображение: {image_path}")
                         continue
 
+                    # РАСЧЕТ РАЗМЕРОВ В ПИКСЕЛЯХ
+                    target_width_px = int(width_mm * dpi / 25.4)
+                    target_height_px = int(height_mm * dpi / 25.4)
+
+                    # РАСТЯГИВАЕМ ИЗОБРАЖЕНИЕ БЕЗ СОХРАНЕНИЯ ПРОПОРЦИЙ
                     scaled_image = image.scaled(
-                        int(width_mm * dpi / 25.4),
-                        int(height_mm * dpi / 25.4),
-                        Qt.KeepAspectRatio,
+                        target_width_px,
+                        target_height_px,
+                        Qt.IgnoreAspectRatio,  # Игнорируем пропорции
                         Qt.SmoothTransformation
                     )
 
