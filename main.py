@@ -799,12 +799,12 @@ class PrintApp(QMainWindow):
 
 
 if __name__ == "__main__":
-    logger.add(
-        "log.log",
-        rotation="20 MB",
-        level="INFO",
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {file!s} | {line} | {message}",
-    )
+    # logger.add(
+    #     "log.log",
+    #     rotation="20 MB",
+    #     level="INFO",
+    #     format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {file!s} | {line} | {message}",
+    # )
     if sys.platform == "win32":
         myappid = "ZebraLemana 2.0.0"
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
